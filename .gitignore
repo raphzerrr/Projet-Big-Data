@@ -1,0 +1,13 @@
+# Ignorer les données brutes et volumineuses
+*.csv
+*.xlsx
+*.parquet
+*.json
+
+# Autoriser spécifiquement les résultats du benchmark s'ils sont en CSV
+!04_benchmark/*.csv
+!04_benchmark/*.xlsx
+
+# Ignorer les fichiers systèmes
+.DS_Store
+Thumbs.db
