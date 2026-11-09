@@ -5,7 +5,7 @@ use chu_gold;
 -- dimension temps
 create table if not exists dim_temps (
     sk_temps int,
-    date_complete date,
+    date_complete string,
     annee smallint,
     trimestre smallint,
     mois smallint,
