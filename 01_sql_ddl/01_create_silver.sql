@@ -1,93 +1,117 @@
--- creation base silver
+-- creation de la base silver
 create database if not exists chu_silver;
 use chu_silver;
 
--- referentiel communes et regions insee (cog 2020)
+-- referentiel geographique cog 2020 (ref_commune_region.csv)
 create table if not exists ref_commune_region (
     code_commune string,
     code_region string,
     nom_region string
-) stored as parquet;
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- patients pseudonymises sans donnees nominatives
-create table if not exists silver_patient (
-    id_patient_hash string,
-    sexe string,
-    tranche_age string
-) stored as parquet;
+-- j01 : etablissements de sante (j1_clean.csv)
+create table if not exists silver_etablissement (
+    identifiant_organisation string,
+    finess_site string,
+    finess_etablissement_juridique string,
+    raison_sociale_site string,
+    code_commune string,
+    code_postal string,
+    commune string,
+    siret_site string
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- professionnels de sante et specialites sans noms
+-- j02 : professionnels de sante postgresql (j2_clean.csv)
 create table if not exists silver_professionnel (
     id_prof_source_hash string,
     civilite_exercice string,
     categorie_pro string,
     profession string,
-    specialite string,
-    mode_exercice string
-) stored as parquet;
+    specialite string
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- etablissements de sante (finess et identifiant d organisation)
-create table if not exists silver_etablissement (
+-- j02 : professionnels de sante issus du csv referentiel (j2_pro_csv_clean.csv)
+create table if not exists silver_professionnel_csv (
+    id_prof_source_hash string,
+    type_identifiant string,
+    civilite_exercice string,
+    categorie_pro string,
+    profession string,
+    specialite string
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');
+
+-- j02 : table de pont professionnel vers organisation (j2_bridge_prof_org.csv)
+create table if not exists silver_bridge_prof_org (
+    id_prof_hash string,
+    nb_organisations int,
     identifiant_organisation string,
-    num_finess_site string,
-    num_finess_ej string,
-    siret_site string,
-    raison_sociale string,
-    code_postal string,
-    code_commune string
-) stored as parquet;
+    statut_affiliation string,
+    mode_exercice string
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- referentiel des diagnostics cim10
+-- j02bis : patients pseudonymises (j2_patient_clean.csv - optionnel si non extrait)
+create table if not exists silver_patient (
+    id_patient_hash string,
+    sexe string,
+    tranche_age string
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');
+
+-- j02bis : referentiel diagnostics (j2_diagnostic_clean.csv - optionnel si non extrait)
 create table if not exists silver_diagnostic (
     code_diag string,
     libelle_diagnostic string,
     categorie_pathologie string
-) stored as parquet;
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- actes de consultation avec duree calculee
+-- j03 : consultations (j3_silver.csv)
 create table if not exists silver_consultation (
     num_consultation_source string,
-    date_consultation string,
+    sk_temps int,
     id_patient_hash string,
     id_prof_source_hash string,
     code_diag string,
-    duree_consultation_min decimal(9,2)
-) stored as parquet;
+    nb_consultations int,
+    duree_consultation_min decimal(9,2),
+    statut_duree string
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- sejours hospitaliers individuels et duree en jours
+-- j04 : hospitalisations (j4_silver.csv)
 create table if not exists silver_hospitalisation (
     num_hosp_source string,
-    date_entree string,
+    sk_temps_entree int,
     id_patient_hash string,
     identifiant_organisation string,
-    code_diagnostic string,
+    code_diag string,
     suite_consultation string,
-    duree_sejour_jours int
-) stored as parquet;
+    nb_hospitalisations int,
+    duree_sejour_jours int,
+    statut_duree string
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- deces insee dedoublonnes et sans noms
-create table if not exists silver_deces (
-    date_deces string,
-    code_lieu_deces string,
-    sexe string,
-    tranche_age string,
-    nb_deces bigint
-) stored as parquet;
-
--- enquetes de satisfaction esatis 48h et ca
+-- j05 : satisfaction esatis (j5_silver.csv)
 create table if not exists silver_satisfaction (
+    fichier_source string,
     annee_campagne int,
-    finess string,
+    sk_temps int,
     type_enquete string,
+    finess_geo string,
+    finess string,
+    cle_rattachement string,
     score_global_ajuste decimal(6,2),
     nb_repondants int,
     taux_recommandation decimal(6,2),
-    nb_repondants_reco int
-) stored as parquet;
+    nb_repondants_reco int,
+    statut_mesure string,
+    depot_source string,
+    participation_source string,
+    region_source string
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- table de pont activite des professionnels vers organisation
-create table if not exists silver_activite_pro (
-    id_prof_source_hash string,
-    identifiant_organisation string,
-    mode_exercice string
-) stored as parquet;
+-- j06 : deces insee deja agreges (j6_silver.csv)
+create table if not exists silver_deces (
+    sk_temps_deces int,
+    code_region string,
+    sexe_decede string,
+    tranche_age_deces string,
+    nb_deces bigint
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');

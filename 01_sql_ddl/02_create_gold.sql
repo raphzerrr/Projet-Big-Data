@@ -2,27 +2,23 @@
 create database if not exists chu_gold;
 use chu_gold;
 
--- dimension temps
+-- 1. dimensions
 create table if not exists dim_temps (
     sk_temps int,
-    date_complete string,
+    date_complete date,
     annee smallint,
     trimestre smallint,
     mois smallint,
     nom_mois string,
     jour smallint
-)
-stored as parquet;
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- dimension region
 create table if not exists dim_region (
     sk_region int,
     code_insee_region string,
     nom_region string
-)
-stored as parquet;
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- dimension etablissement
 create table if not exists dim_etablissement (
     sk_etablissement int,
     identifiant_organisation string,
@@ -33,10 +29,8 @@ create table if not exists dim_etablissement (
     code_postal string,
     code_commune string,
     sk_region int
-)
-stored as parquet;
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- dimension patient
 create table if not exists dim_patient (
     sk_patient bigint,
     id_patient_hash string,
@@ -44,18 +38,15 @@ create table if not exists dim_patient (
     tranche_age string
 )
 clustered by (sk_patient) into 8 buckets
-stored as parquet;
+stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- dimension diagnostic
 create table if not exists dim_diagnostic (
     sk_diagnostic int,
     code_diag string,
     libelle_diagnostic string,
     categorie_pathologie string
-)
-stored as parquet;
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- dimension professionnel
 create table if not exists dim_professionnel (
     sk_professionnel int,
     id_prof_source_hash string,
@@ -64,11 +55,9 @@ create table if not exists dim_professionnel (
     profession string,
     specialite string,
     mode_exercice string
-)
-stored as parquet;
+) stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- fait consultation avec partitionnement par annee et bucketing patient
--- le bucketing sur sk_patient correspond a celui de dim_patient pour optimiser les jointures
+-- 2. tables de faits
 create table if not exists fait_consultation (
     id_fait_consultation bigint,
     num_consultation_source string,
@@ -82,9 +71,8 @@ create table if not exists fait_consultation (
 )
 partitioned by (annee int)
 clustered by (sk_patient) into 8 buckets
-stored as parquet;
+stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- fait hospitalisation avec partitionnement par annee d entree
 create table if not exists fait_hospitalisation (
     id_fait_hospitalisation bigint,
     num_hosp_source string,
@@ -98,10 +86,8 @@ create table if not exists fait_hospitalisation (
 )
 partitioned by (annee_entree int)
 clustered by (sk_patient) into 8 buckets
-stored as parquet;
+stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- fait deces avec partitionnement temporel
--- partitionnement vital pour isoler rapidement les requetes sur l annee 2019
 create table if not exists fait_deces (
     id_fait_deces bigint,
     sk_temps_deces int,
@@ -111,9 +97,8 @@ create table if not exists fait_deces (
     nb_deces bigint
 )
 partitioned by (annee int)
-stored as parquet;
+stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- fait satisfaction partitionne par campagne
 create table if not exists fait_satisfaction (
     id_fait_satisfaction bigint,
     sk_temps int,
@@ -125,4 +110,44 @@ create table if not exists fait_satisfaction (
     nb_repondants_reco int
 )
 partitioned by (annee_campagne int)
-stored as parquet;
+stored as parquet tblproperties ('parquet.compress'='SNAPPY');
+
+-- 3. vues metier pour power bi (j07)
+create or replace view v_kpi_deces_region as
+select
+    f.annee,
+    r.code_insee_region,
+    r.nom_region,
+    f.sexe_decede,
+    f.tranche_age_deces,
+    sum(f.nb_deces) as total_deces
+from chu_gold.fait_deces f
+join chu_gold.dim_region r on f.sk_region = r.sk_region
+group by f.annee, r.code_insee_region, r.nom_region, f.sexe_decede, f.tranche_age_deces;
+
+create or replace view v_kpi_satisfaction_region as
+select
+    s.annee_campagne,
+    r.code_insee_region,
+    r.nom_region,
+    s.type_enquete,
+    round(sum(s.score_global_ajuste * s.nb_repondants) / nullif(sum(s.nb_repondants), 0), 2) as score_moyen_pondere,
+    sum(s.nb_repondants) as total_repondants
+from chu_gold.fait_satisfaction s
+join chu_gold.dim_etablissement e on s.sk_etablissement = e.sk_etablissement
+join chu_gold.dim_region r on e.sk_region = r.sk_region
+where s.score_global_ajuste is not null and s.nb_repondants > 0
+group by s.annee_campagne, r.code_insee_region, r.nom_region, s.type_enquete;
+
+create or replace view v_kpi_activite_etablissement as
+select
+    c.annee,
+    e.num_finess_site,
+    e.raison_sociale,
+    r.nom_region,
+    sum(c.nb_consultations) as total_consultations,
+    round(avg(c.duree_consultation_min), 2) as duree_moyenne_consultation_min
+from chu_gold.fait_consultation c
+join chu_gold.dim_etablissement e on c.sk_etablissement = e.sk_etablissement
+join chu_gold.dim_region r on e.sk_region = r.sk_region
+group by c.annee, e.num_finess_site, e.raison_sociale, r.nom_region;
