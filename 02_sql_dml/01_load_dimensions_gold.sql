@@ -3,7 +3,7 @@ set hive.enforce.bucketing = true;
 
 use chu_gold;
 
--- 1. chargement de dim_temps depuis les cles sk_temps (yyyymmdd et yyyy1231)
+-- 1. chargement de dim_temps depuis les cles sk_temps (compatible hive 1.1 : union all + distinct)
 insert overwrite table dim_temps
 select
     0 as sk_temps,
@@ -32,13 +32,16 @@ from (
         sk_temps,
         to_date(from_unixtime(unix_timestamp(cast(sk_temps as string), 'yyyyMMdd'))) as date_cal
     from (
-        select sk_temps from chu_silver.silver_consultation where sk_temps is not null
-        union
-        select sk_temps_entree as sk_temps from chu_silver.silver_hospitalisation where sk_temps_entree is not null
-        union
-        select sk_temps from chu_silver.silver_satisfaction where sk_temps is not null
-        union
-        select sk_temps_deces as sk_temps from chu_silver.silver_deces where sk_temps_deces is not null
+        select distinct sk_temps
+        from (
+            select sk_temps from chu_silver.silver_consultation where sk_temps is not null
+            union all
+            select sk_temps_entree as sk_temps from chu_silver.silver_hospitalisation where sk_temps_entree is not null
+            union all
+            select sk_temps from chu_silver.silver_satisfaction where sk_temps is not null
+            union all
+            select sk_temps_deces as sk_temps from chu_silver.silver_deces where sk_temps_deces is not null
+        ) u_all
     ) cles_distinctes
 ) t
 where t.date_cal is not null;
@@ -64,14 +67,14 @@ from (
 with cog_unique as (
     select
         code_commune,
-        case when count(distinct code_region) = 1 then max(code_region) else null end as code_region
+        case when count(distinct code_region) = 1 then max(code_region) else cast(null as string) end as code_region
     from chu_silver.ref_commune_region
     group by code_commune
 ),
 etab_par_site as (
     select
         finess_site,
-        case when count(distinct identifiant_organisation) = 1 then max(identifiant_organisation) else null end as identifiant_organisation,
+        case when count(distinct identifiant_organisation) = 1 then max(identifiant_organisation) else cast(null as string) end as identifiant_organisation,
         max(finess_etablissement_juridique) as num_finess_ej,
         max(siret_site) as siret_site,
         max(raison_sociale_site) as raison_sociale,
@@ -126,8 +129,15 @@ prof_dedup as (
         max(categorie_pro) as categorie_pro,
         max(profession) as profession,
         max(specialite) as specialite
-    from chu_silver.silver_professionnel
-    where id_prof_source_hash is not null and id_prof_source_hash <> ''
+    from (
+        select id_prof_source_hash, civilite_exercice, categorie_pro, profession, specialite
+        from chu_silver.silver_professionnel
+        where id_prof_source_hash is not null and id_prof_source_hash <> ''
+        union all
+        select id_prof_source_hash, civilite_exercice, categorie_pro, profession, specialite
+        from chu_silver.silver_professionnel_csv
+        where id_prof_source_hash is not null and id_prof_source_hash <> ''
+    ) p_union
     group by id_prof_source_hash
 )
 insert overwrite table dim_professionnel
@@ -151,7 +161,7 @@ select
 from prof_dedup p
 left join mode_exercice_unique m on p.id_prof_source_hash = m.id_prof_hash;
 
--- 5. chargement de dim_patient (utilise silver_patient + fallback sur les faits si non encore extrait)
+-- 5. chargement de dim_patient (avec fallback sur les faits si non encore extrait)
 with tous_patients as (
     select
         id_patient_hash,
@@ -180,7 +190,7 @@ select
     coalesce(tranche_age, 'INC') as tranche_age
 from tous_patients;
 
--- 6. chargement de dim_diagnostic (utilise silver_diagnostic + fallback sur les faits si non encore extrait)
+-- 6. chargement de dim_diagnostic (avec fallback sur les faits si non encore extrait)
 with tous_diagnostics as (
     select
         code_diag,

@@ -1,18 +1,17 @@
 -- ============================================================================
--- AUDIT DE QUALITE, CONTROLES D INTEGRITE ET EXPORTS J07 (COMPATIBLE HIVE 1.1)
+-- AUDIT DE QUALITE, CONTROLES D INTEGRITE ET EXPORTS J05 / J07 (HIVE 1.1)
 -- ============================================================================
 
-set hiveconf:run_id = RUN_J07_2026;
 use chu_control;
 
--- 1. alimentation idempotente de journal_qualite via table de staging (evite l auto-lecture pendant insert overwrite)
+-- 1. alimentation idempotente de journal_qualite (sans current_timestamp ni auto-lecture)
 drop table if exists stg_journal_qualite;
 create table stg_journal_qualite stored as parquet as
 select * from journal_qualite where id_run <> '${hiveconf:run_id}'
 union all
 select
     '${hiveconf:run_id}' as id_run,
-    current_timestamp() as date_mesure,
+    cast(from_unixtime(unix_timestamp()) as timestamp) as date_mesure,
     'FAIT_CONSULTATION' as nom_table,
     'duree_consultation_min / sk_etablissement' as nom_attribut,
     cast(round(100.0 * count(duree_consultation_min) / case when count(*) = 0 then cast(null as bigint) else count(*) end, 2) as decimal(5,2)) as taux_completude,
@@ -22,7 +21,7 @@ from chu_gold.fait_consultation
 union all
 select
     '${hiveconf:run_id}' as id_run,
-    current_timestamp() as date_mesure,
+    cast(from_unixtime(unix_timestamp()) as timestamp) as date_mesure,
     'FAIT_HOSPITALISATION' as nom_table,
     'duree_sejour_jours / sk_etablissement' as nom_attribut,
     cast(round(100.0 * count(duree_sejour_jours) / case when count(*) = 0 then cast(null as bigint) else count(*) end, 2) as decimal(5,2)) as taux_completude,
@@ -32,7 +31,7 @@ from chu_gold.fait_hospitalisation
 union all
 select
     '${hiveconf:run_id}' as id_run,
-    current_timestamp() as date_mesure,
+    cast(from_unixtime(unix_timestamp()) as timestamp) as date_mesure,
     'FAIT_SATISFACTION' as nom_table,
     'score_global_ajuste / sk_etablissement' as nom_attribut,
     cast(round(100.0 * count(score_global_ajuste) / case when count(*) = 0 then cast(null as bigint) else count(*) end, 2) as decimal(5,2)) as taux_completude,
@@ -42,7 +41,7 @@ from chu_gold.fait_satisfaction
 union all
 select
     '${hiveconf:run_id}' as id_run,
-    current_timestamp() as date_mesure,
+    cast(from_unixtime(unix_timestamp()) as timestamp) as date_mesure,
     'FAIT_DECES' as nom_table,
     'nb_deces (cible=24782307) / sk_region' as nom_attribut,
     cast(round(100.0 * sum(nb_deces) / 24782307.0, 2) as decimal(5,2)) as taux_completude,
@@ -55,7 +54,7 @@ select * from stg_journal_qualite;
 drop table if exists stg_journal_qualite;
 
 
--- 2. alimentation idempotente de journal_lots avec empreinte sha-256 calculee sur le contenu reel des donnees
+-- 2. alimentation idempotente de journal_lots avec vrai sha-256 compatible hive 1.1 via reflect(DigestUtils)
 drop table if exists stg_journal_lots;
 create table stg_journal_lots stored as parquet as
 select * from journal_lots where id_run <> '${hiveconf:run_id}'
@@ -64,23 +63,25 @@ select
     '${hiveconf:run_id}' as id_run,
     'J07_GOLD_PUBLICATION' as nom_job,
     'CHU_SILVER_PARQUET' as source_donnees,
-    sha2(concat_ws('|',
-        cast(m.cnt_consult as string),
-        cast(m.sum_consult_min as string),
-        cast(m.cnt_hosp as string),
-        cast(m.sum_hosp_jours as string),
-        cast(m.cnt_sat as string),
-        cast(m.sum_sat_rep as string),
-        cast(m.cnt_deces as string),
-        cast(m.sum_nb_deces as string),
-        cast(m.cnt_quarantaine as string)
-    ), 256) as empreinte_sha256,
-    current_timestamp() as date_debut,
-    current_timestamp() as date_fin,
+    reflect('org.apache.commons.codec.digest.DigestUtils', 'sha256Hex',
+        concat_ws('|',
+            cast(m.cnt_consult as string),
+            cast(m.sum_consult_min as string),
+            cast(m.cnt_hosp as string),
+            cast(m.sum_hosp_jours as string),
+            cast(m.cnt_sat as string),
+            cast(m.sum_sat_rep as string),
+            cast(m.cnt_deces as string),
+            cast(m.sum_nb_deces as string),
+            cast(m.cnt_quarantaine as string)
+        )
+    ) as empreinte_sha256,
+    cast(from_unixtime(unix_timestamp()) as timestamp) as date_debut,
+    cast(from_unixtime(unix_timestamp()) as timestamp) as date_fin,
     m.lignes_lues as nb_lignes_lues,
     (m.cnt_consult + m.cnt_hosp + m.cnt_sat + m.cnt_deces) as nb_lignes_chargees,
     m.cnt_quarantaine as nb_lignes_rejetees,
-    case when m.sum_nb_deces = 24782307 then 'SUCCESS' else 'WARN_VOLUME_MISMATCH' end as statut
+    case when m.sum_nb_deces = 24782307 and m.cles_quarantaine = 72 and m.cnt_quarantaine = 211 then 'SUCCESS' else 'WARN_CHECK_METRICS' end as statut
 from (
     select
         (select count(*) from chu_silver.silver_consultation)
@@ -95,7 +96,8 @@ from (
         (select coalesce(sum(nb_repondants), 0) from chu_gold.fait_satisfaction) as sum_sat_rep,
         (select count(*) from chu_gold.fait_deces) as cnt_deces,
         (select coalesce(sum(nb_deces), 0) from chu_gold.fait_deces) as sum_nb_deces,
-        (select count(*) from chu_control.quarantaine_satisfaction where id_run = '${hiveconf:run_id}') as cnt_quarantaine
+        (select count(*) from chu_control.quarantaine_satisfaction where id_run = '${hiveconf:run_id}') as cnt_quarantaine,
+        (select count(distinct concat(cast(annee_campagne as string), '_', type_enquete, '_', cle_rattachement)) from chu_control.quarantaine_satisfaction where id_run = '${hiveconf:run_id}') as cles_quarantaine
 ) m;
 
 insert overwrite table journal_lots
@@ -103,7 +105,7 @@ select * from stg_journal_lots;
 drop table if exists stg_journal_lots;
 
 
--- 3. export dans les repertoires locaux temporaires avant assemblage en fichiers .csv
+-- 3. exports j07 (comptages, integrite, lots) et exports j05 (arbitrages et rattachements finess)
 insert overwrite local directory '/tmp/j7_raw/tables_counts'
 row format delimited fields terminated by ';'
 select 'DIM_TEMPS', count(*) from chu_gold.dim_temps
@@ -147,3 +149,42 @@ select
     statut
 from chu_control.journal_lots
 where id_run = '${hiveconf:run_id}';
+
+-- export j5_arbitrages_gold : detail des 72 cles amigues (211 observations) mises en quarantaine
+insert overwrite local directory '/tmp/j7_raw/j5_arbitrages_gold'
+row format delimited fields terminated by ';'
+select
+    id_run,
+    fichier_source,
+    annee_campagne,
+    type_enquete,
+    finess_geo,
+    finess,
+    cle_rattachement,
+    score_global_ajuste,
+    nb_repondants,
+    motif_quarantaine
+from chu_control.quarantaine_satisfaction
+where id_run = '${hiveconf:run_id}'
+order by annee_campagne, type_enquete, cle_rattachement;
+
+-- export j5_rattachement_gold : bilan du rattachement finess vers dim_etablissement des enquetes publiees
+insert overwrite local directory '/tmp/j7_raw/j5_rattachement_gold'
+row format delimited fields terminated by ';'
+select
+    s.annee_campagne,
+    s.type_enquete,
+    case
+        when s.sk_etablissement <> 0 then 'RATTACHE_SITE_UNIVOQUE'
+        else 'NON_RATTACHE_INCONNU_0'
+    end as statut_rattachement,
+    count(*) as nb_enquetes_publiees
+from chu_gold.fait_satisfaction s
+group by
+    s.annee_campagne,
+    s.type_enquete,
+    case
+        when s.sk_etablissement <> 0 then 'RATTACHE_SITE_UNIVOQUE'
+        else 'NON_RATTACHE_INCONNU_0'
+    end
+order by s.annee_campagne, s.type_enquete, statut_rattachement;

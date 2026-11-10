@@ -112,7 +112,7 @@ create table if not exists fait_satisfaction (
 partitioned by (annee_campagne int)
 stored as parquet tblproperties ('parquet.compress'='SNAPPY');
 
--- 3. vues metier pour power bi (j07)
+-- 3. vues metier pour power bi (j07 - sans nullif pour compatibilite hive 1.1)
 create or replace view v_kpi_deces_region as
 select
     f.annee,
@@ -131,7 +131,10 @@ select
     r.code_insee_region,
     r.nom_region,
     s.type_enquete,
-    round(sum(s.score_global_ajuste * s.nb_repondants) / nullif(sum(s.nb_repondants), 0), 2) as score_moyen_pondere,
+    round(
+        sum(s.score_global_ajuste * s.nb_repondants) /
+        case when sum(s.nb_repondants) = 0 then cast(null as bigint) else sum(s.nb_repondants) end,
+    2) as score_moyen_pondere,
     sum(s.nb_repondants) as total_repondants
 from chu_gold.fait_satisfaction s
 join chu_gold.dim_etablissement e on s.sk_etablissement = e.sk_etablissement
