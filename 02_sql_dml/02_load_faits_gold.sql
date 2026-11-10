@@ -10,9 +10,12 @@ use chu_gold;
 with org_univoque_site as (
     select
         identifiant_organisation,
-        case when count(distinct finess_site) = 1 then max(finess_site) else null end as finess_site_unique
+        case
+            when count(*) = 1 and count(distinct finess_site) = 1 then max(finess_site)
+            else cast(null as string)
+        end as finess_site_unique
     from chu_silver.silver_etablissement
-    where identifiant_organisation is not null and finess_site is not null
+    where identifiant_organisation is not null
     group by identifiant_organisation
 ),
 prof_univoque_etab as (
@@ -51,7 +54,7 @@ select
         when c.duree_consultation_min >= 0 and c.duree_consultation_min <= 720 then c.duree_consultation_min
         else cast(null as decimal(9,2))
     end as duree_consultation_min,
-    cast( c.sk_temps / 10000 as int) as annee
+    cast(c.sk_temps / 10000 as int) as annee
 from consult_dedup c
 left join chu_gold.dim_temps t on c.sk_temps = t.sk_temps and t.sk_temps <> 0
 left join chu_gold.dim_patient p on c.id_patient_hash = p.id_patient_hash and p.sk_patient <> 0
@@ -65,9 +68,12 @@ where c.rn = 1;
 with org_univoque_etab as (
     select
         s.identifiant_organisation,
-        case when count(distinct e.sk_etablissement) = 1 then max(e.sk_etablissement) else 0 end as sk_etablissement
+        case
+            when count(*) = 1 and count(distinct e.sk_etablissement) = 1 then max(e.sk_etablissement)
+            else 0
+        end as sk_etablissement
     from chu_silver.silver_etablissement s
-    join chu_gold.dim_etablissement e on s.finess_site = e.num_finess_site and e.sk_etablissement <> 0
+    left join chu_gold.dim_etablissement e on s.finess_site = e.num_finess_site and e.sk_etablissement <> 0
     where s.identifiant_organisation is not null
     group by s.identifiant_organisation
 ),
@@ -118,14 +124,17 @@ where dec.sk_temps_deces is not null;
 
 
 -- 4. quarantaine et chargement de fait_satisfaction (j05)
--- 4a. mise en quarantaine des cles gold amigues (72 cles / 211 observations)
+-- 4a. mise en quarantaine stricte des 72 cles gold amigues (211 observations) sur (annee_campagne, type_enquete, cle_rattachement)
 with cles_ambigues as (
     select
         annee_campagne,
         type_enquete,
-        coalesce(finess_geo, finess, cle_rattachement) as cle_site
+        cle_rattachement
     from chu_silver.silver_satisfaction
-    group by annee_campagne, type_enquete, coalesce(finess_geo, finess, cle_rattachement)
+    where annee_campagne is not null
+      and type_enquete in ('ESATIS_48H', 'ESATIS_CA')
+      and cle_rattachement is not null
+    group by annee_campagne, type_enquete, cle_rattachement
     having count(*) > 1
 )
 insert overwrite table chu_control.quarantaine_satisfaction
@@ -139,36 +148,36 @@ select
     s.cle_rattachement,
     s.score_global_ajuste,
     s.nb_repondants,
-    'ERR_DUP_GOLD_KEY_AMBIGUOUS' as motif_quarantaine
+    'ERR_DUP_GOLD_KEY_AMBIGUOUS_72_KEYS' as motif_quarantaine
 from chu_silver.silver_satisfaction s
 join cles_ambigues a
   on s.annee_campagne = a.annee_campagne
  and s.type_enquete = a.type_enquete
- and coalesce(s.finess_geo, s.finess, s.cle_rattachement) = a.cle_site;
+ and s.cle_rattachement = a.cle_rattachement;
 
--- 4b. chargement dans fait_satisfaction des observations univoques
-with ej_univoque as (
-    select
-        num_finess_ej,
-        case when count(distinct sk_etablissement) = 1 then max(sk_etablissement) else 0 end as sk_etab_ej
-    from chu_gold.dim_etablissement
-    where sk_etablissement <> 0 and num_finess_ej is not null
-    group by num_finess_ej
-),
-cles_univoques as (
+-- 4b. chargement dans fait_satisfaction des observations univoques sans rattachement finess_ej arbitraire
+-- regle : priorite a finess_geo = num_finess_site ; si finess_geo absent, finess = num_finess_site ; sinon sk_etablissement = 0
+with cles_univoques as (
     select
         annee_campagne,
         type_enquete,
-        coalesce(finess_geo, finess, cle_rattachement) as cle_site
+        cle_rattachement
     from chu_silver.silver_satisfaction
-    group by annee_campagne, type_enquete, coalesce(finess_geo, finess, cle_rattachement)
+    where annee_campagne is not null
+      and type_enquete in ('ESATIS_48H', 'ESATIS_CA')
+      and cle_rattachement is not null
+    group by annee_campagne, type_enquete, cle_rattachement
     having count(*) = 1
 )
 insert overwrite table fait_satisfaction partition (annee_campagne)
 select
-    cast(row_number() over (order by s.annee_campagne, coalesce(s.finess_geo, s.finess), s.type_enquete) as bigint) as id_fait_satisfaction,
+    cast(row_number() over (order by s.annee_campagne, s.cle_rattachement, s.type_enquete) as bigint) as id_fait_satisfaction,
     coalesce(t.sk_temps, s.sk_temps, cast(concat(cast(s.annee_campagne as string), '1231') as int)) as sk_temps,
-    coalesce(e_geo.sk_etablissement, e_fin.sk_etablissement, ej.sk_etab_ej, 0) as sk_etablissement,
+    case
+        when s.finess_geo is not null and e_geo.sk_etablissement is not null then e_geo.sk_etablissement
+        when s.finess_geo is null and e_site.sk_etablissement is not null then e_site.sk_etablissement
+        else 0
+    end as sk_etablissement,
     s.type_enquete,
     case when s.score_global_ajuste >= 0 and s.score_global_ajuste <= 100 then s.score_global_ajuste else cast(null as decimal(6,2)) end as score_global_ajuste,
     s.nb_repondants,
@@ -179,9 +188,8 @@ from chu_silver.silver_satisfaction s
 join cles_univoques u
   on s.annee_campagne = u.annee_campagne
  and s.type_enquete = u.type_enquete
- and coalesce(s.finess_geo, s.finess, s.cle_rattachement) = u.cle_site
+ and s.cle_rattachement = u.cle_rattachement
 left join chu_gold.dim_temps t on s.sk_temps = t.sk_temps and t.sk_temps <> 0
 left join chu_gold.dim_etablissement e_geo on s.finess_geo = e_geo.num_finess_site and e_geo.sk_etablissement <> 0
-left join chu_gold.dim_etablissement e_fin on s.finess = e_fin.num_finess_site and e_fin.sk_etablissement <> 0
-left join ej_univoque ej on coalesce(s.finess, s.cle_rattachement) = ej.num_finess_ej
+left join chu_gold.dim_etablissement e_site on s.finess = e_site.num_finess_site and e_site.sk_etablissement <> 0
 where s.annee_campagne is not null;
