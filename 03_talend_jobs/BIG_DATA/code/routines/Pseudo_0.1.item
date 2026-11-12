@@ -1,0 +1,56 @@
+
+package routines;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+
+public class Pseudo {
+
+    public static String hmac(String input, String secret) {
+
+        // Un identifiant absent ne peut pas être pseudonymisé
+        if (input == null || input.trim().isEmpty()) {
+            return null;
+        }
+
+        // La clé secrète est obligatoire
+        if (secret == null || secret.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                "HMAC_SECRET est vide ou non défini dans Talend"
+            );
+        }
+
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+
+            SecretKeySpec key = new SecretKeySpec(
+                secret.getBytes(StandardCharsets.UTF_8),
+                "HmacSHA256"
+            );
+
+            mac.init(key);
+
+            byte[] bytes = mac.doFinal(
+                input.trim().getBytes(StandardCharsets.UTF_8)
+            );
+
+            StringBuilder result = new StringBuilder();
+
+            for (byte b : bytes) {
+                String hex = Integer.toHexString(b & 0xff);
+
+                if (hex.length() == 1) {
+                    result.append('0');
+                }
+
+                result.append(hex);
+            }
+
+            return result.toString();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur HMAC-SHA256", e);
+        }
+    }
+}

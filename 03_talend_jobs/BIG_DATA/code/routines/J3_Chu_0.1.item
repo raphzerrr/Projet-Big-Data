@@ -1,0 +1,46 @@
+package routines;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.ResolverStyle;
+
+public class J3_Chu {
+    private static final DateTimeFormatter DATE_ISO =
+        DateTimeFormatter.ofPattern("uuuu-MM-dd")
+            .withResolverStyle(ResolverStyle.STRICT);
+
+    // Renvoie AAAAMMJJ si la date est valide ; sinon null.
+    public static Integer skTemps(String texte) {
+        if (texte == null || texte.trim().isEmpty()) return null;
+        try {
+            LocalDate d = LocalDate.parse(texte.trim(), DATE_ISO);
+            return d.getYear() * 10000 + d.getMonthValue() * 100
+                   + d.getDayOfMonth();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // Heures acceptées : HH:mm ou HH:mm:ss (et fractions de seconde ISO).
+    // Consultation le même jour : durée entre 0 et 720 minutes.
+    public static BigDecimal dureeMinutes(String debut, String fin) {
+        if (debut == null || fin == null ||
+            debut.trim().isEmpty() || fin.trim().isEmpty()) return null;
+        try {
+            LocalTime h1 = LocalTime.parse(debut.trim());
+            LocalTime h2 = LocalTime.parse(fin.trim());
+            long nanos = Duration.between(h1, h2).toNanos();
+            long limite = 720L * 60L * 1_000_000_000L;
+            if (nanos < 0 || nanos > limite) return null;
+            return BigDecimal.valueOf(nanos)
+                .divide(BigDecimal.valueOf(60_000_000_000L),
+                        2, RoundingMode.HALF_UP);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+}

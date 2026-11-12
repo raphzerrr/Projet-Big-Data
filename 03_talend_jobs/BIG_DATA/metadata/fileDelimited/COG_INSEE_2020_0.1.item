@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:TalendMetadata="http://www.talend.org/metadata/connection/2010" xmlns:orgomg.cwm.resource.record="http:///orgomg/cwm/resource/record.ecore">
+  <TalendMetadata:DelimitedFileConnection xmi:id="_A0TxIdxFEfGfX6AStWAyKA" name="COG_INSEE_2020" dataPackage="_A0TxItxFEfGfX6AStWAyKA" Server="Localhost 127.0.0.1" FilePath="C:/Users/Maison/Downloads/DATA 2024/ref_commune_region.csv" Encoding="UTF-8" FieldSeparatorValue="&quot;;&quot;" RowSeparatorValue="&quot;\n&quot;" UseHeader="true" HeaderValue="1" FirstLineCaption="true"/>
+  <orgomg.cwm.resource.record:RecordFile xmi:id="_A0TxItxFEfGfX6AStWAyKA" name="default" dataManager="_A0TxIdxFEfGfX6AStWAyKA">
+    <ownedElement xsi:type="TalendMetadata:MetadataTable" xmi:id="_A0TxI9xFEfGfX6AStWAyKA" id="_4LMmQNxEEfGfX6AStWAyKA" label="metadata">
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_A0TxJNxFEfGfX6AStWAyKA" label="code_commune" length="5" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_A0TxJdxFEfGfX6AStWAyKA" label="code_region" length="-1" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_A0TxJtxFEfGfX6AStWAyKA" label="nom_region" length="21" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+    </ownedElement>
+  </orgomg.cwm.resource.record:RecordFile>
+</xmi:XMI>

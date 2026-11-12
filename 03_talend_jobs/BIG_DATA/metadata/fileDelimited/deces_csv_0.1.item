@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:TalendMetadata="http://www.talend.org/metadata/connection/2010" xmlns:orgomg.cwm.resource.record="http:///orgomg/cwm/resource/record.ecore">
+  <TalendMetadata:DelimitedFileConnection xmi:id="_VcfoANxDEfGfX6AStWAyKA" name="deces.csv" dataPackage="_VcfoAdxDEfGfX6AStWAyKA" Server="Localhost 127.0.0.1" FilePath="C:/Users/Maison/Downloads/DATA 2024/DECES EN FRANCE/deces.csv" Encoding="US-ASCII" FieldSeparatorValue="&quot;,&quot;" RowSeparatorValue="&quot;\n&quot;" UseHeader="true" HeaderValue="1" FirstLineCaption="true" FieldSeparatorType="Comma"/>
+  <orgomg.cwm.resource.record:RecordFile xmi:id="_VcfoAdxDEfGfX6AStWAyKA" name="default" dataManager="_VcfoANxDEfGfX6AStWAyKA">
+    <ownedElement xsi:type="TalendMetadata:MetadataTable" xmi:id="_VcfoAtxDEfGfX6AStWAyKA" id="_4tnBsNxCEfGfX6AStWAyKA" label="metadata">
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_VcfoA9xDEfGfX6AStWAyKA" label="nom" length="12" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_VcfoBNxDEfGfX6AStWAyKA" label="prenom" length="26" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_VcfoBdxDEfGfX6AStWAyKA" label="sexe" length="-1" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_VcfoBtxDEfGfX6AStWAyKA" label="date_naissance" length="-1" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_VcfoB9xDEfGfX6AStWAyKA" label="code_lieu_naissance" length="5" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_VcfoCNxDEfGfX6AStWAyKA" label="lieu_naissance" length="10" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_VcfoCdxDEfGfX6AStWAyKA" label="pays_naissance" length="2" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_VcfoCtxDEfGfX6AStWAyKA" label="date_deces" length="-1" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_VcfoC9xDEfGfX6AStWAyKA" label="code_lieu_deces" length="5" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_VcfoDNxDEfGfX6AStWAyKA" label="numero_acte_deces" length="4" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+    </ownedElement>
+  </orgomg.cwm.resource.record:RecordFile>
+</xmi:XMI>
