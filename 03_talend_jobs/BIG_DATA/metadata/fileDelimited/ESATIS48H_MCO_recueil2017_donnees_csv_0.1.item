@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:TalendMetadata="http://www.talend.org/metadata/connection/2010" xmlns:orgomg.cwm.resource.record="http:///orgomg/cwm/resource/record.ecore">
+  <TalendMetadata:DelimitedFileConnection xmi:id="_15HsMNwTEfGIx_GAAAhiyQ" name="ESATIS48H_MCO_recueil2017_donnees.csv" dataPackage="_15HsMdwTEfGIx_GAAAhiyQ" Server="Localhost 127.0.0.1" FilePath="C:/Users/Maison/Downloads/DATA 2024/Satisfaction/ESATIS48H_MCO_recueil2017_donnees.csv" Encoding="windows-1252" FieldSeparatorValue="&quot;;&quot;" RowSeparatorValue="&quot;\n&quot;" UseHeader="true" HeaderValue="1" FirstLineCaption="true"/>
+  <orgomg.cwm.resource.record:RecordFile xmi:id="_15HsMdwTEfGIx_GAAAhiyQ" name="default" dataManager="_15HsMNwTEfGIx_GAAAhiyQ">
+    <ownedElement xsi:type="TalendMetadata:MetadataTable" xmi:id="_15HsMtwTEfGIx_GAAAhiyQ" id="_mV518NwTEfGIx_GAAAhiyQ" label="metadata">
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsM9wTEfGIx_GAAAhiyQ" label="finess" length="9" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsNNwTEfGIx_GAAAhiyQ" label="rs_finess" length="51" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsNdwTEfGIx_GAAAhiyQ" label="finess_geo" length="9" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsNtwTEfGIx_GAAAhiyQ" label="rs_finess_geo" length="37" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsN9wTEfGIx_GAAAhiyQ" label="region" length="20" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsONwTEfGIx_GAAAhiyQ" label="participation" length="14" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsOdwTEfGIx_GAAAhiyQ" label="Depot" length="6" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsOtwTEfGIx_GAAAhiyQ" label="nb_rep_score_all_rea_ajust" length="3" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsO9wTEfGIx_GAAAhiyQ" label="score_all_rea_ajust" length="5" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsPNwTEfGIx_GAAAhiyQ" label="classement" length="2" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsPdwTEfGIx_GAAAhiyQ" label="evolution" length="16" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsPtwTEfGIx_GAAAhiyQ" label="nb_rep_score_accueil_rea_ajust" length="3" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsP9wTEfGIx_GAAAhiyQ" label="score_accueil_rea_ajust" length="5" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsQNwTEfGIx_GAAAhiyQ" label="nb_rep_score_PECinf_rea_ajust" length="3" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsQdwTEfGIx_GAAAhiyQ" label="score_PECinf_rea_ajust" length="5" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsQtwTEfGIx_GAAAhiyQ" label="nb_rep_score_PECmed_rea_ajust" length="3" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsQ9wTEfGIx_GAAAhiyQ" label="score_PECmed_rea_ajust" length="5" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsRNwTEfGIx_GAAAhiyQ" label="nb_rep_score_chambre_rea_ajust" length="3" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsRdwTEfGIx_GAAAhiyQ" label="score_chambre_rea_ajust" length="5" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsRtwTEfGIx_GAAAhiyQ" label="nb_rep_score_repas_rea_ajust" length="3" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsR9wTEfGIx_GAAAhiyQ" label="score_repas_rea_ajust" length="5" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsSNwTEfGIx_GAAAhiyQ" label="nb_rep_score_sortie_rea_ajust" length="3" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_15HsSdwTEfGIx_GAAAhiyQ" label="score_sortie_rea_ajust" length="5" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+    </ownedElement>
+  </orgomg.cwm.resource.record:RecordFile>
+</xmi:XMI>

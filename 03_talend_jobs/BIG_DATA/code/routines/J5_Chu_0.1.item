@@ -1,0 +1,73 @@
+package routines;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.Normalizer;
+
+public class J5_Chu {
+    public static String clean(String s) {
+        if (s == null) return null;
+        String v = Normalizer.normalize(s.trim(), Normalizer.Form.NFC);
+        return v.length() == 0 || v.equalsIgnoreCase("NULL") ? null : v;
+    }
+
+    public static boolean missing(String s) {
+        String v = clean(s);
+        return v == null || v.equalsIgnoreCase("NA") || v.equalsIgnoreCase("N/A")
+            || v.equalsIgnoreCase("NR") || v.equalsIgnoreCase("NC")
+            || v.equalsIgnoreCase("NAN") || v.equals("-") || v.equals("--")
+            || v.equals(".") || v.equalsIgnoreCase("[ND]");
+    }
+
+    public static boolean isFiness(String s) {
+        String v = clean(s);
+        return v != null && v.matches("[0-9]{9}");
+    }
+
+    // GEO et EJ sont volontairement distincts : une EJ n'est pas un site.
+    public static String key(String geo, String ej) {
+        if (isFiness(geo)) return "GEO:" + clean(geo);
+        if (isFiness(ej)) return "EJ:" + clean(ej);
+        return null;
+    }
+
+    private static String numberText(String s) {
+        if (missing(s)) return null;
+        return clean(s).replace("\u00A0", "").replace("\u202F", "")
+                       .replace(" ", "").replace(',', '.');
+    }
+
+    public static BigDecimal score(String s) {
+        String v = numberText(s);
+        if (v == null || !v.matches("[+-]?[0-9]+(\\.[0-9]+)?")) return null;
+        try {
+            BigDecimal n = new BigDecimal(v);
+            if (n.compareTo(BigDecimal.ZERO) < 0 || n.compareTo(new BigDecimal("100")) > 0) return null;
+            return n.setScale(2, RoundingMode.HALF_UP);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    public static boolean badScore(String s) {
+        return !missing(s) && score(s) == null;
+    }
+
+    public static Integer count(String s) {
+        String v = numberText(s);
+        // Accepte 12 et 12.0 (certains exports Excel) ; refuse 12.5.
+        if (v == null || !v.matches("[0-9]+(\\.0+)?")) return null;
+        try {
+            return new BigDecimal(v).intValueExact();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static String statut(String scoreBrut, String nbBrut) {
+        if (missing(scoreBrut)) return "SANS_SCORE";
+        if (badScore(scoreBrut)) return "ERR_SCORE_BOUNDS"; // sera rejeté
+        Integer nb = count(nbBrut);
+        return nb == null || nb.intValue() <= 0 ? "WARN_EFFECTIF" : "VALID";
+    }
+}

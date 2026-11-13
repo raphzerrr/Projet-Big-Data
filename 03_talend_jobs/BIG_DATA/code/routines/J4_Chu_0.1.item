@@ -1,0 +1,51 @@
+package routines;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.ResolverStyle;
+
+public class J4_Chu {
+
+    private static final DateTimeFormatter ISO =
+        DateTimeFormatter.ofPattern("uuuu-MM-dd")
+            .withResolverStyle(ResolverStyle.STRICT);
+
+    private static final DateTimeFormatter FR =
+        DateTimeFormatter.ofPattern("dd/MM/uuuu")
+            .withResolverStyle(ResolverStyle.STRICT);
+
+    // Renvoie une date au format AAAAMMJJ, ou null si absente/invalide.
+    // Formats explicitement acceptés : 2015-06-20 et 20/06/2015.
+    public static Integer skTempsEntree(String texte) {
+        if (texte == null || texte.trim().isEmpty()) return null;
+        String valeur = texte.trim();
+        DateTimeFormatter[] formats = {ISO, FR};
+
+        for (DateTimeFormatter format : formats) {
+            try {
+                LocalDate date = LocalDate.parse(valeur, format);
+                return date.getYear() * 10000
+                       + date.getMonthValue() * 100
+                       + date.getDayOfMonth();
+            } catch (Exception e) {
+                // On essaie le format suivant.
+            }
+        }
+        return null;
+    }
+
+    // Durée source déjà exprimée en jours. Pas de calcul de date de sortie.
+    // Accepte un entier de 0 à 365 inclus ; sinon renvoie null.
+    public static Integer dureeSejour(String texte) {
+        if (texte == null || texte.trim().isEmpty()) return null;
+        String valeur = texte.trim();
+        if (!valeur.matches("[0-9]+")) return null;
+
+        try {
+            int jours = Integer.parseInt(valeur);
+            return (jours >= 0 && jours <= 365) ? jours : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+}

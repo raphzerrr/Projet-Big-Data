@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:TalendMetadata="http://www.talend.org/metadata/connection/2010" xmlns:orgomg.cwm.resource.record="http:///orgomg/cwm/resource/record.ecore">
+  <TalendMetadata:DelimitedFileConnection xmi:id="_M6lUYNjtEfGIx_GAAAhiyQ" name="hospitalisations.csv" id="_M6emsNjtEfGIx_GAAAhiyQ" dataPackage="_M6lUYdjtEfGIx_GAAAhiyQ" Server="Localhost 127.0.0.1" FilePath="C:/Users/Maison/Downloads/DATA 2024/Hospitalisation/Hospitalisations.csv" Encoding="US-ASCII" FieldSeparatorValue="&quot;;&quot;" RowSeparatorValue="&quot;\n&quot;" UseHeader="true" HeaderValue="1" FirstLineCaption="true"/>
+  <orgomg.cwm.resource.record:RecordFile xmi:id="_M6lUYdjtEfGIx_GAAAhiyQ" name="default" dataManager="_M6lUYNjtEfGIx_GAAAhiyQ">
+    <ownedElement xsi:type="TalendMetadata:MetadataTable" xmi:id="_M6lUYtjtEfGIx_GAAAhiyQ" id="_GeBgoNjtEfGIx_GAAAhiyQ" label="metadata">
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_M6lUY9jtEfGIx_GAAAhiyQ" label="Num_Hospitalisation" length="-1" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_M6lUZNjtEfGIx_GAAAhiyQ" label="Id_patient" length="-1" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_M6lUZdjtEfGIx_GAAAhiyQ" label="identifiant_organisation" length="10" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_M6lUZtjtEfGIx_GAAAhiyQ" label="Code_diagnostic" length="6" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_M6lUZ9jtEfGIx_GAAAhiyQ" label="Suite_diagnostic_consultation" length="112" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_M6lUaNjtEfGIx_GAAAhiyQ" label="Date_Entree" length="10" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+      <feature xsi:type="TalendMetadata:MetadataColumn" xmi:id="_M6lUadjtEfGIx_GAAAhiyQ" label="Jour_Hospitalisation" length="-1" talendType="id_String" pattern="&quot;dd-MM-yyyy&quot;"/>
+    </ownedElement>
+  </orgomg.cwm.resource.record:RecordFile>
+</xmi:XMI>

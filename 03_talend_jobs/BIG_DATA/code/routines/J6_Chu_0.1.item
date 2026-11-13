@@ -1,0 +1,54 @@
+package routines;
+
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
+import java.time.format.ResolverStyle;
+
+public class J6_Chu {
+    private static final DateTimeFormatter[] FORMATS = {
+        DateTimeFormatter.ofPattern("uuuu-MM-dd").withResolverStyle(ResolverStyle.STRICT),
+        DateTimeFormatter.ofPattern("dd/MM/uuuu").withResolverStyle(ResolverStyle.STRICT),
+        DateTimeFormatter.ofPattern("uuuuMMdd").withResolverStyle(ResolverStyle.STRICT)
+    };
+
+    public static LocalDate dateValide(String valeur) {
+        if (valeur == null || valeur.trim().isEmpty()) return null;
+        for (DateTimeFormatter fmt : FORMATS) {
+            try { return LocalDate.parse(valeur.trim(), fmt); }
+            catch (Exception ignore) { /* Essayer le format suivant. */ }
+        }
+        return null;
+    }
+
+    public static Integer skTempsDeces(String dateDeces) {
+        LocalDate d = dateValide(dateDeces);
+        return d == null ? null : d.getYear() * 10000 + 1231;
+    }
+
+    public static String sexeInsee(String source) {
+        if (source == null) return "INC";
+        String s = source.trim();
+        if (s.equals("1")) return "M";
+        if (s.equals("2")) return "F";
+        return "INC";
+    }
+
+    public static String trancheAge(String dateNaissance, String dateDeces) {
+        LocalDate naissance = dateValide(dateNaissance);
+        LocalDate deces = dateValide(dateDeces);
+        if (naissance == null || deces == null || naissance.isAfter(deces)) return "INC";
+        int age = Period.between(naissance, deces).getYears();
+        if (age > 120) return "INC";
+        if (age <= 14) return "AG00";
+        if (age <= 24) return "AG01";
+        if (age <= 34) return "AG02";
+        if (age <= 44) return "AG03";
+        if (age <= 54) return "AG04";
+        if (age <= 64) return "AG05";
+        if (age <= 74) return "AG06";
+        if (age <= 84) return "AG07";
+        if (age <= 94) return "AG08";
+        return "AG09";
+    }
+}
